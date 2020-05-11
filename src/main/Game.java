@@ -9,6 +9,12 @@ import gfx.GameCamera;
 import input.KeyManager;
 import input.MouseManager;
 import states.GameState;
+import states.LoadState;
+import states.MenuState;
+import states.PauseState;
+import states.SaveSelectState;
+import states.SaveState;
+import states.SettingsState;
 import states.State;
 
 public class Game implements Runnable{
@@ -20,6 +26,9 @@ public class Game implements Runnable{
 	
 	private boolean running;
 	private boolean debug = false;
+    public boolean creationDateSet = false;
+    
+    private float difficultyLevel = 1;
 	
 	private Thread thread;
 	private Display display;
@@ -27,11 +36,20 @@ public class Game implements Runnable{
 	private Graphics g;
 	
 	public State menuState;
+	public State gameState;
+	public State settingsState;
+	public State saveState;
+	public State pauseState;
+	public State loadState;
+	public State saveSelectionState;
 	
 	private Handler handler;
 	private GameCamera gameCamera;
 	private KeyManager keyManager;
 	private MouseManager mouseManager;
+	
+	public String creationDate;
+	public String modifiedDate;
 	
 	public Game(String title, int width, int height) {
 		running = false;
@@ -107,7 +125,13 @@ public class Game implements Runnable{
         Assets.init();
 		handler = new Handler(this);
 		gameCamera = new GameCamera(handler, 0.0F, 0.0F);
-		menuState = new GameState(handler);
+		gameState = new GameState(handler);
+		menuState = new MenuState(handler);
+		settingsState = new SettingsState(handler);
+		pauseState = new PauseState(handler);
+		saveState = new SaveState(handler);
+		saveSelectionState = new SaveSelectState(handler);
+		loadState = new LoadState(handler);
 		State.setState(menuState);
 	}
 	
@@ -185,6 +209,38 @@ public class Game implements Runnable{
 
 	public void setMouseManager(MouseManager mouseManager) {
 		this.mouseManager = mouseManager;
+	}
+
+	public String getModifiedDate() {
+		return modifiedDate;
+	}
+
+	public void setModifiedDate(String modifiedDate) {
+		this.modifiedDate = modifiedDate;
+	}
+
+	public String getCreationDate() {
+		return creationDate;
+	}
+
+	public void setCreationDate(String creationDate) {
+		this.creationDate = creationDate;
+	}
+
+	public boolean isCreationDateSet() {
+		return creationDateSet;
+	}
+
+	public void setCreationDateSet(boolean creationDateSet) {
+		this.creationDateSet = creationDateSet;
+	}
+
+	public float getDifficultyLevel() {
+		return difficultyLevel;
+	}
+
+	public void setDifficultyLevel(float difficultyLevel) {
+		this.difficultyLevel = difficultyLevel;
 	}
 	
 }

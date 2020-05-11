@@ -1,11 +1,17 @@
 package world;
 
 import java.awt.Graphics;
+import java.util.ArrayList;
 
 import entities.Entity;
 import entities.EntityManager;
 import entities.creatures.Player;
 import entities.creatures.hostile.Zombie;
+import entities.creatures.hostile.ZombieBoss;
+import entities.statics.Flint;
+import entities.statics.IronOre;
+import entities.statics.Stone;
+import entities.statics.Tree;
 import items.ItemManager;
 import main.Handler;
 import tiles.Tile;
@@ -26,26 +32,46 @@ public class World {
 	private int currentArea = 1;
 	private int subAreaNum = 1;
 	
+	private String subAreaName = "area1";
+	private String saveName = "";
+	
+	private int loadedSave = 1;
+	private int amountOfSaves = 0;
+	
 	private int[][] tiles;
 	
-	private boolean loaded = false; //to see if entitymanager and player have been created to avoid causing a nullpointer
+	private boolean created = false; //to see if entitymanager and player have been created to avoid causing a nullpointer
+	private boolean entitiesLoaded = true; //to see if entities were loaded at the start of the game
 	
 	private EntityManager entityManager;
 	private ItemManager itemManager;
 	
+	private ArrayList<Area> areas = new ArrayList<Area>();
+	private Area area1;
+	private Area bossRoom1;
+	
 	public World(Handler handler) {
 		this.handler = handler;
 		Tile.setHandler(handler);
-		entityManager = new EntityManager();
+		entityManager = new EntityManager(handler);
         itemManager = new ItemManager(handler);
 		entityManager.setup(new Player(handler, spawnX, spawnY, -1));
 		loadWorld();
 		entityManager.getPlayer().setX(spawnX);
 		entityManager.getPlayer().setY(spawnY);
-		loaded = true;
+		created = true;
+		
+		area1 = new Area("area1", 1, "area1");
+		bossRoom1 = new Area("bossRoom1", 2, "bossRoom1");
+		
+		areas.add(area1);
+		areas.add(bossRoom1);
 	}
 	
 	public void tick() {
+		if(entityManager.getPlayer().getKilledBosses() > 0)
+			Tile.bossEntrance.setUnlocked(true);
+		Tile.bossEntrance.updateTextures();
 		entityManager.tick();
         itemManager.tick();
 	}
@@ -65,12 +91,102 @@ public class World {
         entityManager.render(g);
 	}
 	
-	public void loadWorld() { //basic world loader
-		String path = "res/areas/area" + currentArea + "/area" + currentArea + ".txt"; //path of world
+	public void loadTiles() { //basic world loader
+		String path;
+		if(subAreaNum > 1) {
+			path = "res/areas/area" + currentArea + "/" + subAreaName + ".txt"; //path of world
+		}else {
+			path = "res/areas/area" + currentArea + "/area" + currentArea + ".txt"; //path of world
+		}
 		String file = Utils.loadFileAsString(path); //file for world
 		String tokens[] = file.split("\\s+"); //tokens for world
 		
-		String ePath = "res/areas/area" + currentArea + "/entities/area" + currentArea + "Entities.txt"; //path of entities
+		width = Utils.parseInt(tokens[0]);
+		height = Utils.parseInt(tokens[1]);
+		this.spawnX = Utils.parseInt(tokens[2]);
+		this.spawnY = Utils.parseInt(tokens[3]);
+		if(created) {
+			entityManager.getPlayer().setX(spawnX);
+			entityManager.getPlayer().setY(spawnY);
+		}
+		tiles = new int[width][height];
+		String token[];
+		
+		for(int y = 0; y < height; y++) {
+			for(int x = 0; x < width; x++) {
+				token = tokens[x + y * width + 4].split("\\ ");
+				tiles[x][y] = Utils.parseInt(token[0]);
+				if(tiles[x][y] == 0) {
+					Tile.getTiles().add(Tile.dirtTile);
+				}else if(tiles[x][y] == 1) {
+					Tile.getTiles().add(Tile.grassTile);
+				}else if(tiles[x][y] == 2) {
+					Tile.getTiles().add(Tile.wallTile);
+				}else if(tiles[x][y] == 3) {
+					Tile.getTiles().add(Tile.waterTile);
+				}else if(tiles[x][y] == 4) {
+					Tile.getTiles().add(Tile.bossEntrance);
+				}
+			}
+		}
+	}
+	
+	public void loadTiles(int xx, int yy) { //basic world loader
+		String path;
+		if(subAreaNum > 1) {
+			path = "res/areas/area" + currentArea + "/" + subAreaName + ".txt"; //path of world
+		}else {
+			path = "res/areas/area" + currentArea + "/area" + currentArea + ".txt"; //path of world
+		}
+		String file = Utils.loadFileAsString(path); //file for world
+		String tokens[] = file.split("\\s+"); //tokens for world
+		
+		width = Utils.parseInt(tokens[0]);
+		height = Utils.parseInt(tokens[1]);
+		this.spawnX = Utils.parseInt(tokens[2]);
+		this.spawnY = Utils.parseInt(tokens[3]);
+		if(created) {
+			entityManager.getPlayer().setStartX(spawnX);
+			entityManager.getPlayer().setStartY(spawnY);
+			entityManager.getPlayer().loadX(xx);
+			entityManager.getPlayer().loadY(yy);
+		}
+		tiles = new int[width][height];
+		String token[];
+		
+		for(int y = 0; y < height; y++) {
+			for(int x = 0; x < width; x++) {
+				token = tokens[x + y * width + 4].split("\\ ");
+				tiles[x][y] = Utils.parseInt(token[0]);
+				if(tiles[x][y] == 0) {
+					Tile.getTiles().add(Tile.dirtTile);
+				}else if(tiles[x][y] == 1) {
+					Tile.getTiles().add(Tile.grassTile);
+				}else if(tiles[x][y] == 2) {
+					Tile.getTiles().add(Tile.wallTile);
+				}else if(tiles[x][y] == 3) {
+					Tile.getTiles().add(Tile.waterTile);
+				}else if(tiles[x][y] == 4) {
+					Tile.getTiles().add(Tile.bossEntrance);
+				}
+			}
+		}
+	}
+	
+	
+	public void loadWorld() { //basic world loader
+		String path;
+		String ePath;
+		if(subAreaNum > 1) {
+			path = "res/areas/area" + currentArea + "/" + subAreaName + ".txt"; //path of world
+			ePath = "res/areas/area" + currentArea + "/entities/" + subAreaName + "Entities.txt"; //path of entities
+		}else {
+			path = "res/areas/area" + currentArea + "/area" + currentArea + ".txt"; //path of world
+			ePath = "res/areas/area" + currentArea + "/entities/area" + currentArea + "Entities.txt"; //path of entities
+		}
+		String file = Utils.loadFileAsString(path); //file for world
+		String tokens[] = file.split("\\s+"); //tokens for world
+		
 		String eFile = Utils.loadFileAsString(ePath); //file for entities
 		String eTokens[] = eFile.split("\\s+"); //tokens for entities
 		
@@ -78,6 +194,10 @@ public class World {
 		height = Utils.parseInt(tokens[1]);
 		this.spawnX = Utils.parseInt(tokens[2]);
 		this.spawnY = Utils.parseInt(tokens[3]);
+		if(created) {
+			entityManager.getPlayer().setX(spawnX);
+			entityManager.getPlayer().setY(spawnY);
+		}
 		tiles = new int[width][height];
 		String token[];
 		
@@ -97,6 +217,10 @@ public class World {
 					Tile.getTiles().add(Tile.grassTile);
 				}else if(tiles[x][y] == 2) {
 					Tile.getTiles().add(Tile.wallTile);
+				}else if(tiles[x][y] == 3) {
+					Tile.getTiles().add(Tile.waterTile);
+				}else if(tiles[x][y] == 4) {
+					Tile.getTiles().add(Tile.bossEntrance);
 				}
 			}
 		}
@@ -107,7 +231,16 @@ public class World {
 			entityName = eToken[0];
 			eToken2 = eToken[1].split("\\,");
 			boolean exists = false;
-			if(entityName.contains("Zombie")) {
+			if(entityName.contains("ZombieBoss")) {
+				e = new ZombieBoss(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum, entityManager.getPlayer());
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("Zombie")) {
 				e = new Zombie(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum, entityManager.getPlayer());
 				for(Entity ee : entityManager.getEntities()) {
 					if(ee.getId() == e.getId()) {
@@ -116,7 +249,44 @@ public class World {
 				}
 				if(!exists)
 					entityManager.add(e);
+			}else if(entityName.contains("Tree")) {
+				e = new Tree(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("Stone")) {
+				e = new Stone(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("Flint")) {
+				e = new Flint(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("IronOre")) {
+				e = new IronOre(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
 			}
+			entityNum++;
 		}
 		
 	}
@@ -134,7 +304,7 @@ public class World {
 		height = Utils.parseInt(tokens[1]);
 		this.spawnX = Utils.parseInt(tokens[2]);
 		this.spawnY = Utils.parseInt(tokens[3]);
-		if(loaded) {
+		if(created) {
 			entityManager.getPlayer().setX(spawnX);
 			entityManager.getPlayer().setY(spawnY);
 		}
@@ -157,6 +327,10 @@ public class World {
 					Tile.getTiles().add(Tile.grassTile);
 				}else if(tiles[x][y] == 2) {
 					Tile.getTiles().add(Tile.wallTile);
+				}else if(tiles[x][y] == 3) {
+					Tile.getTiles().add(Tile.waterTile);
+				}else if(tiles[x][y] == 4) {
+					Tile.getTiles().add(Tile.bossEntrance);
 				}
 			}
 		}
@@ -167,7 +341,16 @@ public class World {
 			entityName = eToken[0];
 			eToken2 = eToken[1].split("\\,");
 			boolean exists = false;
-			if(entityName.contains("Zombie")) {
+			if(entityName.contains("ZombieBoss")) {
+				e = new ZombieBoss(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum, entityManager.getPlayer());
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("Zombie")) {
 				e = new Zombie(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum, entityManager.getPlayer());
 				for(Entity ee : entityManager.getEntities()) {
 					if(ee.getId() == e.getId()) {
@@ -176,7 +359,44 @@ public class World {
 				}
 				if(!exists)
 					entityManager.add(e);
+			}else if(entityName.contains("Tree")) {
+				e = new Tree(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("Stone")) {
+				e = new Stone(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("Flint")) {
+				e = new Flint(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("IronOre")) {
+				e = new IronOre(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
 			}
+			entityNum++;
 		}
 	}
 	
@@ -193,7 +413,7 @@ public class World {
 		height = Utils.parseInt(tokens[1]);
 		this.spawnX = xx;
 		this.spawnY = yy;
-		if(loaded) {
+		if(created) {
 			entityManager.getPlayer().setX(spawnX);
 			entityManager.getPlayer().setY(spawnY);
 		}
@@ -216,6 +436,10 @@ public class World {
 					Tile.getTiles().add(Tile.grassTile);
 				}else if(tiles[x][y] == 2) {
 					Tile.getTiles().add(Tile.wallTile);
+				}else if(tiles[x][y] == 3) {
+					Tile.getTiles().add(Tile.waterTile);
+				}else if(tiles[x][y] == 4) {
+					Tile.getTiles().add(Tile.bossEntrance);
 				}
 			}
 		}
@@ -226,7 +450,16 @@ public class World {
 			entityName = eToken[0];
 			eToken2 = eToken[1].split("\\,");
 			boolean exists = false;
-			if(entityName.contains("Zombie")) {
+			if(entityName.contains("ZombieBoss")) {
+				e = new ZombieBoss(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum, entityManager.getPlayer());
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("Zombie")) {
 				e = new Zombie(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum, entityManager.getPlayer());
 				for(Entity ee : entityManager.getEntities()) {
 					if(ee.getId() == e.getId()) {
@@ -235,7 +468,44 @@ public class World {
 				}
 				if(!exists)
 					entityManager.add(e);
+			}else if(entityName.contains("Tree")) {
+				e = new Tree(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("Stone")) {
+				e = new Stone(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("Flint")) {
+				e = new Flint(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
+			}else if(entityName.contains("IronOre")) {
+				e = new IronOre(handler, Integer.parseInt(eToken2[0]), Integer.parseInt(eToken2[1]), entityNum);
+				for(Entity ee : entityManager.getEntities()) {
+					if(ee.getId() == e.getId()) {
+						exists = true;
+					}
+				}
+				if(!exists)
+					entityManager.add(e);
 			}
+			entityNum++;
 		}
 	}
 	
@@ -291,6 +561,69 @@ public class World {
 
 	public ItemManager getItemManager() {
 		return itemManager;
+	}
+
+	public int getLoadedSave() {
+		return loadedSave;
+	}
+
+	public void setLoadedSave(int loadedSave) {
+		this.loadedSave = loadedSave;
+	}
+
+	public int getCurrentArea() {
+		return currentArea;
+	}
+
+	public void setCurrentArea(int currentArea) {
+		this.currentArea = currentArea;
+	}
+
+	public int getAmountOfSaves() {
+		return amountOfSaves;
+	}
+
+	public void setAmountOfSaves(int amountOfSaves) {
+		this.amountOfSaves = amountOfSaves;
+	}
+	public boolean isEntitiesLoaded() {
+		return entitiesLoaded;
+	}
+
+	public void setEntitiesLoaded(boolean entitiesLoaded) {
+		this.entitiesLoaded = entitiesLoaded;
+	}
+
+	public int getSubAreaNum() {
+		return subAreaNum;
+	}
+
+	public void setSubAreaNum(int subAreaNum) {
+		this.subAreaNum = subAreaNum;
+	}
+
+	public String getSubAreaName() {
+		return subAreaName;
+	}
+
+	public void setSubAreaName(String subAreaName) {
+		this.subAreaName = subAreaName;
+	}
+
+	public String getSaveName() {
+		return saveName;
+	}
+
+	public void setSaveName(String saveName) {
+		this.saveName = saveName;
+	}
+
+	public ArrayList<Area> getAreas() {
+		return areas;
+	}
+
+	public void setAreas(ArrayList<Area> areas) {
+		this.areas = areas;
 	}
 	
 }

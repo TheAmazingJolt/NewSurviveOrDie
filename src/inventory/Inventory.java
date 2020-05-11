@@ -144,15 +144,10 @@ public class Inventory {
 		slots.add(craftSlot1);
 		slots.add(craftSlot2);
 		slots.add(craftSlot3Main);
-		
-		addItem1(Item.wood, 3);
-		addItem1(Item.stone, 1);
-		addItem1(Item.ironOre, 1);
-		addItem1(Item.flint, 1);
 	}
 	
 	public void tick() {
-		if(handler.getKeyManager().keyJustPressed(KeyEvent.VK_E)) {
+		if(handler.getKeyManager().keyJustPressed(KeyEvent.VK_E) && !handler.getWorld().getEntityManager().getPlayer().getBrewing().isActive()) {
 			if(active) {
 				for(InventorySlot s : slots) {
 					s.setItemStored(null);
@@ -166,7 +161,25 @@ public class Inventory {
 				inventoryItemsReset.clear();
 			}
 			active = !active;
+		}else if(handler.getKeyManager().keyJustPressed(KeyEvent.VK_ESCAPE) && active) {
+			for(InventorySlot s : slots) {
+				s.setItemStored(null);
+				s.setToDefault();
+			}
+			inventoryItemsReset.addAll(inventoryItems);
+			inventoryItems.clear();
+			for(Item i : inventoryItemsReset) {
+				addItem1(i, i.getCount());
+			}
+			inventoryItemsReset.clear();
+			active = false;
+		}else if(handler.getKeyManager().keyJustPressed(KeyEvent.VK_RIGHT) && active) {
+			this.active = false;
+			handler.getWorld().getEntityManager().getPlayer().getBrewing().setActive(true);
 		}
+		
+		if(!active)
+			return;
 		
 		int mouseX = handler.getMouseManager().getMouseX();
 		int mouseY = handler.getMouseManager().getMouseY();

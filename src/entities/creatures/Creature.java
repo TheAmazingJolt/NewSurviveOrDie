@@ -7,10 +7,10 @@ import main.Handler;
 
 public abstract class Creature extends Entity{
 
-	public static final float DEFAULT_SPEED = 5f;
 	public static final int DEFAULT_CREATURE_WIDTH = 64;
 	public static final int DEFAULT_CREATURE_HEIGHT = 64;
 	
+	protected float defaultSpeed = 5;
 	protected float speed;
 	protected float xSpeed;
 	protected float ySpeed;
@@ -27,17 +27,19 @@ public abstract class Creature extends Entity{
 	
 	public Creature(Handler handler, float x, float y, int width, int height, int health, int id, String name) {
 		super(handler, x, y, width, height, health, id, name);
-		speed = DEFAULT_SPEED;
+		speed = defaultSpeed;
 		xMove = 0.0F;
 		yMove = 0.0F;
 	}
 	
 	public void move() {
-		if(!checkEntityCollisions(xMove, 0.0F)) {
-			moveX();
-		}
-		if(!checkEntityCollisions(0.0F, yMove)) {
-			moveY();
+		if(!handler.getWorld().getEntityManager().getPlayer().getInventory().isActive()) {
+			if(!checkEntityCollisions(xMove, 0.0F)) {
+				moveX();
+			}
+			if(!checkEntityCollisions(0.0F, yMove)) {
+				moveY();
+			}
 		}
 	}
 	
@@ -68,6 +70,7 @@ public abstract class Creature extends Entity{
 	
 	protected boolean collisionWithTile(int x, int y)
     {
+		this.speed = defaultSpeed * handler.getWorld().getTile(x, y).speedMultiplier();
     	this.tileCollision = handler.getWorld().getTile(x, y).isSolid();
     	if(handler.getWorld().getTile(x, y).isDoor() && this == handler.getWorld().getEntityManager().getPlayer())
     		handler.getWorld().getTile(x, y).enter();
@@ -130,8 +133,8 @@ public abstract class Creature extends Entity{
 		this.tileY = tileY;
 	}
 
-	public static float getDefaultSpeed() {
-		return DEFAULT_SPEED;
+	public float getDefaultSpeed() {
+		return defaultSpeed;
 	}
 
 	public static int getDefaultCreatureWidth() {

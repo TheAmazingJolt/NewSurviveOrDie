@@ -1,5 +1,7 @@
 package main;
 
+import java.util.Random;
+
 import gfx.GameCamera;
 import input.KeyManager;
 import input.MouseManager;
@@ -9,6 +11,7 @@ public class Handler {
 
 	private Game game;
 	private World world;
+	private Random random = new Random();
 	
 	public Handler(Game game) {
 		this.game = game;
@@ -22,6 +25,14 @@ public class Handler {
 		this.game = game;
 	}
 	
+	public Random getRandom() {
+		return random;
+	}
+
+	public void setRandom(Random random) {
+		this.random = random;
+	}
+
 	public GameCamera getGameCamera() {
 		return game.getGameCamera();
 	}

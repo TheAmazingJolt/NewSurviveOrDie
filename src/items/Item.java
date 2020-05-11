@@ -23,6 +23,15 @@ public class Item {
 	public static Item woodenHandle = new Item(Assets.woodenHandleItem, 9);
 	public static Item ironAxe = new Item(Assets.ironAxeItem, true, 3, 10);
 	public static Item rottenFlesh = new Item(Assets.rottenFleshItem, 11);
+	public static Item healingPowder = new Item(Assets.healingPowderItem, 12);
+	public static Item bottle = new Item(Assets.bottleItem, 13);
+	public static Item healthPotion = new Item(Assets.healthPotionItem, 14);
+	public static Item healthBoostPotion = new Item(Assets.healthBoostPotionItem, 15);
+	public static Item crushedIron = new Item(Assets.crushedIronItem, 16);
+	public static Item waterBottle = new Item(Assets.waterBottleItem, 17);
+	public static Item hammerHead = new Item(Assets.hammerHeadItem, 18);
+	public static Item hammer = new Item(Assets.hammerItem, 19);
+	public static Item bossKey = new Item(Assets.hammerHeadItem, 20);
 	
 	protected Handler handler;
 	protected BufferedImage texture;
@@ -169,6 +178,14 @@ public class Item {
 
 	public void setAttackDamage(int attackDamage) {
 		this.attackDamage = attackDamage;
+	}
+
+	public static ArrayList<Item> getItems() {
+		return items;
+	}
+
+	public static void setItems(ArrayList<Item> items) {
+		Item.items = items;
 	}
 	
 }

@@ -12,10 +12,17 @@ public class BasicRecipe {
 	
 	public static BasicRecipe axeItem = new BasicRecipe(Assets.axeItem, Item.wood, Item.stone, Item.axe, 1);
 	public static BasicRecipe cutWoodItem = new BasicRecipe(Assets.cutWoodItem, Item.axe, Item.wood, Item.cutWood, 2);
-	public static BasicRecipe fireItem = new BasicRecipe(Assets.fireItem, Item.cutWood, Item.flint, Item.fire, 3);
-	public static BasicRecipe ironBarItem = new BasicRecipe(Assets.ironBarItem, Item.ironOre, Item.fire, Item.ironBar, 4);
-	public static BasicRecipe woodenHandleItem = new BasicRecipe(Assets.woodenHandleItem, Item.axe, Item.cutWood, Item.woodenHandle, 5);
-	public static BasicRecipe ironAxeItem = new BasicRecipe(Assets.ironAxeItem, Item.woodenHandle, Item.ironBar, Item.ironAxe, 6);
+	public static BasicRecipe cutWoodItem2 = new BasicRecipe(Assets.cutWoodItem, Item.ironAxe, Item.wood, Item.cutWood, 3);
+	public static BasicRecipe fireItem = new BasicRecipe(Assets.fireItem, Item.cutWood, Item.flint, Item.fire, 4);
+	public static BasicRecipe ironBarItem = new BasicRecipe(Assets.ironBarItem, Item.ironOre, Item.fire, Item.ironBar, 5);
+	public static BasicRecipe woodenHandleItem = new BasicRecipe(Assets.woodenHandleItem, Item.axe, Item.cutWood, Item.woodenHandle, 6);
+	public static BasicRecipe ironAxeItem = new BasicRecipe(Assets.ironAxeItem, Item.woodenHandle, Item.ironBar, Item.ironAxe, 7);
+	public static BasicRecipe bottleItem = new BasicRecipe(Assets.bottleItem, Item.crushedIron, Item.fire, Item.bottle, 8);
+	public static BasicRecipe hammerHeadItem = new BasicRecipe(Assets.hammerHeadItem, Item.axe, Item.ironBar, Item.hammerHead, 9);
+	public static BasicRecipe hammerHeadItem2 = new BasicRecipe(Assets.hammerHeadItem, Item.ironAxe, Item.ironBar, Item.hammerHead, 10);
+	public static BasicRecipe hammerItem = new BasicRecipe(Assets.hammerItem, Item.hammerHead, Item.woodenHandle, Item.hammer, 11);
+	public static BasicRecipe crushedIronItem = new BasicRecipe(Assets.crushedIronItem, Item.stone, Item.ironBar, Item.crushedIron, 12);
+	public static BasicRecipe crushedIronItem2 = new BasicRecipe(Assets.crushedIronItem, Item.hammer, Item.ironBar, Item.crushedIron, 13);
 	
 	protected BufferedImage texture;
 	protected Item item1;

@@ -75,10 +75,20 @@ public class InventorySlot {
 			if(mouseX >= slotX && mouseX <= slotX + slotWidth) {
 				if(mouseY >= slotY && mouseY <= slotY + slotHeight) {
 					boolean allDeselected = true;
-					for(InventorySlot s : handler.getWorld().getEntityManager().getPlayer().getInventory().getSlots()) {
-						if(s != this) {
-							if(s.isSelected()) {
-								allDeselected = false;
+					if(handler.getWorld().getEntityManager().getPlayer().getInventory().isActive()) {
+						for(InventorySlot s : handler.getWorld().getEntityManager().getPlayer().getInventory().getSlots()) {
+							if(s != this) {
+								if(s.isSelected()) {
+									allDeselected = false;
+								}
+							}
+						}
+					}else if(handler.getWorld().getEntityManager().getPlayer().getBrewing().isActive()) {
+						for(InventorySlot s : handler.getWorld().getEntityManager().getPlayer().getBrewing().getSlots()) {
+							if(s != this) {
+								if(s.isSelected()) {
+									allDeselected = false;
+								}
 							}
 						}
 					}
@@ -99,52 +109,102 @@ public class InventorySlot {
 		}
 		
 		if(handler.getMouseManager().isLeftPressed() && selected) {
-			for(InventorySlot s : handler.getWorld().getEntityManager().getPlayer().getInventory().getSlots()) {
-				if(s != this) {
-					if(mouseX >= s.getSlotX() && mouseX <= s.getSlotX() + slotWidth) {
-						if(mouseY >= s.getSlotY() && mouseY <= s.getSlotY() + slotHeight) {
-							if(itemStored != null) {
-								if(!itemStored.isNewlyCrafted() && (s.getLocation() == 19 || location == 19))
-									break;
-								Item currentItem = this.itemStored;
-								Item newItem = s.itemStored;
-								s.setItemStored(currentItem);
-								if(newItem == null) {
-									this.setItemStored(null);
-									this.selected = false;
-									s.setSelected(false);
-									this.updateTextCoords();
-									checkingTicks = true;
-									s.setCheckingTicks(true);
-								}else {
-									this.setItemStored(newItem);
-									this.selected = false;
-									s.setSelected(false);
-									this.updateTextCoords();
-									checkingTicks = true;
-									s.setCheckingTicks(true);
-								}
-								if(itemStored != null && itemStored.isNewlyCrafted()) {
-									startLocation = this.getLocation();
-									originalX = this.startX;
-									originalY = this.startY;
-									itemStored.setNewlyCrafted(false);
+			if(handler.getWorld().getEntityManager().getPlayer().getInventory().isActive()) {
+				for(InventorySlot s : handler.getWorld().getEntityManager().getPlayer().getInventory().getSlots()) {
+					if(s != this) {
+						if(mouseX >= s.getSlotX() && mouseX <= s.getSlotX() + slotWidth) {
+							if(mouseY >= s.getSlotY() && mouseY <= s.getSlotY() + slotHeight) {
+								if(itemStored != null) {
+									if(!itemStored.isNewlyCrafted() && (s.getLocation() == 19 || location == 19))
+										break;
+									Item currentItem = this.itemStored;
+									Item newItem = s.itemStored;
+									s.setItemStored(currentItem);
+									if(newItem == null) {
+										this.setItemStored(null);
+										this.selected = false;
+										s.setSelected(false);
+										this.updateTextCoords();
+										checkingTicks = true;
+										s.setCheckingTicks(true);
+									}else {
+										this.setItemStored(newItem);
+										this.selected = false;
+										s.setSelected(false);
+										this.updateTextCoords();
+										checkingTicks = true;
+										s.setCheckingTicks(true);
+									}
+									if(itemStored != null && itemStored.isNewlyCrafted()) {
+										startLocation = this.getLocation();
+										originalX = this.startX;
+										originalY = this.startY;
+										itemStored.setNewlyCrafted(false);
+									}
 								}
 							}
 						}
+					}else if(s == this) {
+						if(mouseX >= s.getSlotX() && mouseX <= s.getSlotX() + slotWidth) {
+							if(mouseY >= s.getSlotY() && mouseY <= s.getSlotY() + slotHeight) {
+								this.setSlotX(startX);
+								this.setSlotY(startY);
+								this.selected = false;
+								this.updateTextCoords();
+								checkingTicks = true;
+							}
+						}
 					}
-				}else if(s == this) {
-					if(mouseX >= s.getSlotX() && mouseX <= s.getSlotX() + slotWidth) {
-						if(mouseY >= s.getSlotY() && mouseY <= s.getSlotY() + slotHeight) {
-							this.setSlotX(startX);
-							this.setSlotY(startY);
-							this.selected = false;
-							this.updateTextCoords();
-							checkingTicks = true;
+				}
+			}else if(handler.getWorld().getEntityManager().getPlayer().getBrewing().isActive()) {
+				for(InventorySlot s : handler.getWorld().getEntityManager().getPlayer().getBrewing().getSlots()) {
+					if(s != this) {
+						if(mouseX >= s.getSlotX() && mouseX <= s.getSlotX() + slotWidth) {
+							if(mouseY >= s.getSlotY() && mouseY <= s.getSlotY() + slotHeight) {
+								if(itemStored != null) {
+									if(!itemStored.isNewlyCrafted() && (s.getLocation() == 20 || location == 20))
+										break;
+									Item currentItem = this.itemStored;
+									Item newItem = s.itemStored;
+									s.setItemStored(currentItem);
+									if(newItem == null) {
+										this.setItemStored(null);
+										this.selected = false;
+										s.setSelected(false);
+										this.updateTextCoords();
+										checkingTicks = true;
+										s.setCheckingTicks(true);
+									}else {
+										this.setItemStored(newItem);
+										this.selected = false;
+										s.setSelected(false);
+										this.updateTextCoords();
+										checkingTicks = true;
+										s.setCheckingTicks(true);
+									}
+									if(itemStored != null && itemStored.isNewlyCrafted()) {
+										startLocation = this.getLocation();
+										originalX = this.startX;
+										originalY = this.startY;
+										itemStored.setNewlyCrafted(false);
+									}
+								}
+							}
+						}
+					}else if(s == this) {
+						if(mouseX >= s.getSlotX() && mouseX <= s.getSlotX() + slotWidth) {
+							if(mouseY >= s.getSlotY() && mouseY <= s.getSlotY() + slotHeight) {
+								this.setSlotX(startX);
+								this.setSlotY(startY);
+								this.selected = false;
+								this.updateTextCoords();
+								checkingTicks = true;
+							}
 						}
 					}
 				}
 			}
+			
 		}
 	}
 	

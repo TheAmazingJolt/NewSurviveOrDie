@@ -14,10 +14,11 @@ public abstract class Entity {
 	protected float startX;
 	protected float startY;
 	
+	protected float health;
+	
 	protected int width;
 	protected int height;
 	protected int id;
-	protected int health;
 	protected int startHealth;
 	protected int maxHealth;
 	
@@ -52,11 +53,13 @@ public abstract class Entity {
 	
 	public abstract void die();
 	
-	public void hurt(int amt) {
-		this.health -= amt;
-		if(this.health < 0) {
-			this.active = false;
-			this.die();
+	public void hurt(float amt) {
+		if(!handler.getWorld().getEntityManager().getPlayer().getInventory().isActive()) {
+			this.health -= amt;
+			if(this.health < 0) {
+				this.active = false;
+				this.die();
+			}
 		}
 	}
 	
@@ -86,6 +89,11 @@ public abstract class Entity {
 
 	public void setX(float x) {
 		this.x = x;
+		this.startX = x;
+	}
+	
+	public void loadX(float x) {
+		this.x = x;
 	}
 
 	public float getY() {
@@ -94,7 +102,13 @@ public abstract class Entity {
 
 	public void setY(float y) {
 		this.y = y;
+		this.startY = y;
 	}
+	
+	public void loadY(float y) {
+		this.y = y;
+	}
+
 
 	public float getStartX() {
 		return startX;
@@ -144,11 +158,11 @@ public abstract class Entity {
 		this.id = id;
 	}
 
-	public int getHealth() {
+	public float getHealth() {
 		return health;
 	}
 
-	public void setHealth(int health) {
+	public void setHealth(float health) {
 		this.health = health;
 	}
 

@@ -9,14 +9,21 @@ import java.awt.image.BufferedImage;
 import entities.Entity;
 import gfx.Animation;
 import gfx.Assets;
+import inventory.Grave;
 import inventory.Inventory;
 import inventory.hotbar.Hotbar;
+import items.crafting.brewing.BrewingInventory;
 import main.Handler;
+import saving.Load;
+import states.LoadState;
 import utils.Timer;
 
 public class Player extends Creature{
 
 	private static int maxHealth = 10;
+	
+	private int killedEnemies = 0;
+	private int killedBosses = 0;
 
     private long attackCooldown;
     
@@ -30,9 +37,12 @@ public class Player extends Creature{
     private Animation animUp;
     private Animation animLeft;
     private Animation animRight;
+//    private Animation animStill;
     
     private Inventory inventory;
+    private BrewingInventory brewing;
     private Hotbar hotbar;
+    private Grave grave;
     
 	public Player(Handler handler, float x, float y, int id) {
 		super(handler, x, y, 64, 64, maxHealth, id, "Player");
@@ -48,10 +58,12 @@ public class Player extends Creature{
         animUp = new Animation(500, Assets.playerUp);
         animLeft = new Animation(500, Assets.playerLeft);
         animRight = new Animation(500, Assets.playerRight);
+//        animStill = new Animation(0, Assets.playerStill);
         ar = new Rectangle();
 
         hotbar = new Hotbar(handler);
         inventory = new Inventory(handler, hotbar);
+        brewing = new BrewingInventory(handler, inventory, hotbar);
 	}
 
 	public void tick() {
@@ -63,11 +75,18 @@ public class Player extends Creature{
         animUp.tick();
         animLeft.tick();
         animRight.tick();
+        if(grave != null) {
+    		if(!grave.isCollected())
+    			grave.tick();
+    		else if(grave.isCollected())
+    			grave = null;
+    	}
 		getInput();
 		move();
 		checkAttacks();
 		inventory.tick();
 		hotbar.tick();
+		brewing.tick();
 		handler.getGameCamera().centerOnEntity(this);
 	}
 
@@ -75,6 +94,8 @@ public class Player extends Creature{
 		if(!active)
 			return;
 		g.drawImage(getCurrentAnimationFrame(), (int)(x - handler.getGameCamera().getxOffset()), (int)(y - handler.getGameCamera().getyOffset()), width, height, null);
+		if(grave != null && !grave.isCollected())
+        	grave.render(g);
 		g.setColor(Color.red);
 		g.fillRect((int)(x - handler.getGameCamera().getxOffset()), (int)(y - handler.getGameCamera().getyOffset() - 5), width, 3);
 		g.setColor(Color.green);
@@ -89,18 +110,40 @@ public class Player extends Creature{
 	public void postRender(Graphics g) {
 		hotbar.render(g);
 		inventory.render(g);
+		brewing.render(g);
 	}
 
 	public void die() {
-		
+		hotbar.getHotbarItems().clear();
+		if(grave == null) {
+			grave = new Grave(inventory.getInventoryItems(), this, this.x, this.y, handler);
+		}
+		inventory.getInventoryItems().clear();
+		active = true;
+		health = maxHealth;
+		if(handler.getWorld().getSubAreaNum() != 1) {
+			handler.getWorld().unload();
+			handler.getWorld().setSubAreaNum(1);
+			handler.getWorld().getEntityManager().setSubAreaNum(1);
+			handler.getWorld().setSubAreaName("area1");
+			handler.getWorld().loadTiles();
+			handler.getWorld().tick();
+			Load.loadEntityData(handler, LoadState.saveName, handler.getWorld().getSubAreaName(), handler.getWorld().getEntityManager().getEntities());
+			x = startX;
+			y = startY;
+		}else {
+			x = startX;
+			y = startY;
+		}
 	}
 
 	private void getInput()
     {
-		if(inventory.isActive())
-			return;
     	xMove = 0.0F;
         yMove = 0.0F;
+		if(inventory.isActive()) {
+			return;
+		}
         if(handler.getKeyManager().up)
         	yMove = -speed;
         if(handler.getKeyManager().down)
@@ -117,7 +160,8 @@ public class Player extends Creature{
     {
     	if(health <= 0)
             die();
-    	if(hotbar.getHotbarItems().size() > 0)
+    	if(hotbar.getHotbarItems().size() > 0 && !(hotbar.getSelectedItem() >= hotbar.getHotbarItems().size())
+    			&& hotbar.getHotbarItems().get(hotbar.getSelectedItem()) != null)
     		this.attackStrength = hotbar.getHotbarItems().get(hotbar.getSelectedItem()).getAttackDamage();
         Rectangle cb = getCollisionBounds(0.0F, 0.0F);
         int arSize = 20;
@@ -125,30 +169,33 @@ public class Player extends Creature{
         ar.height = arSize * 3;
         if(yMove < 0 && xMove == 0) {//up
         	ar.x = (cb.x + cb.width / 2) - arSize / 2;
-        	ar.y = cb.y - arSize;
-        }else if(yMove > 0 && xMove == 0|| yMove == 0 && xMove == 0) {//down and still
+        	ar.y = cb.y - arSize - 19;
+        }else if(yMove == 0 && xMove == 0) {//still
         	ar.x = (cb.x + cb.width / 2) - arSize / 2;
-        	ar.y = cb.y + cb.height - 63;
+        	ar.y = cb.y + cb.height - 60;
         }else if(xMove < 0.0F && yMove == 0) {//left
         	ar.x = cb.x - arSize;
-        	ar.y = (cb.y + cb.height / 2) - arSize / 2 - 18;
+        	ar.y = cb.y + cb.height - 60;
         }else if(xMove > 0.0F && yMove == 0) {//right
         	ar.x = cb.x + cb.width;
-        	ar.y = (cb.y + cb.height / 2) - arSize / 2 - 18;
+        	ar.y = cb.y + cb.height - 60;
+        }else if(yMove > 0 && xMove == 0) {//down
+        	ar.x = (cb.x + cb.width / 2) - arSize / 2;
+        	ar.y = cb.y + cb.height - 45;
         }
         
         if(xMove > 0.0f && yMove < 0.0f) {//up right
             ar.x = cb.x + cb.width;
-            ar.y = cb.y - arSize;
+            ar.y = cb.y - arSize - 19;
         }else if(xMove > 0.0f && yMove > 0.0f) {//down right
             ar.x = cb.x + cb.width;
             ar.y = cb.y + cb.height - 45;
         }else if(xMove < 0.0f && yMove < 0.0f) {//up left
             ar.x = cb.x - cb.width;
-            ar.y = cb.y - arSize;
+            ar.y = cb.y - arSize - 19;
         }else if(xMove < 0.0f && yMove > 0.0f) {//down left
             ar.x = cb.x - cb.width;
-            ar.y = cb.y + cb.height - 45;
+        	ar.y = (cb.y + cb.height / 2) - arSize / 2 - 18;
         }
         
         if(timer == null)
@@ -179,7 +226,8 @@ public class Player extends Creature{
         if(yMove < 0.0F)
             return animUp.getCurrentFrame();
         else
-            return animDown.getCurrentFrame();
+        	return animDown.getCurrentFrame();
+        
     }
 	
 	public int getMaxHealth() {
@@ -204,6 +252,30 @@ public class Player extends Creature{
 
 	public void setHotbar(Hotbar hotbar) {
 		this.hotbar = hotbar;
+	}
+
+	public BrewingInventory getBrewing() {
+		return brewing;
+	}
+
+	public void setBrewing(BrewingInventory brewing) {
+		this.brewing = brewing;
+	}
+
+	public int getKilledEnemies() {
+		return killedEnemies;
+	}
+
+	public void setKilledEnemies(int killedEnemies) {
+		this.killedEnemies = killedEnemies;
+	}
+
+	public int getKilledBosses() {
+		return killedBosses;
+	}
+
+	public void setKilledBosses(int killedBosses) {
+		this.killedBosses = killedBosses;
 	}
 
 }

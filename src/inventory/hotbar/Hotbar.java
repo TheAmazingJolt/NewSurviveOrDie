@@ -5,9 +5,11 @@ import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
+import entities.creatures.Player;
 import gfx.Assets;
 import items.Item;
 import main.Handler;
+import tiles.Tile;
 
 public class Hotbar {
 
@@ -15,6 +17,7 @@ public class Hotbar {
 	
 	private ArrayList<Item> hotbarItems;
 	private ArrayList<Item> toRemove;
+	private ArrayList<Item> toAdd;
 	
 	private int hotbarX;
 	private int hotbarY;
@@ -52,6 +55,7 @@ public class Hotbar {
 		this.handler = handler;
 		hotbarItems = new ArrayList<Item>();
 		toRemove = new ArrayList<Item>();
+		toAdd = new ArrayList<Item>();
 	}
 	
 	public void tick() {
@@ -78,6 +82,9 @@ public class Hotbar {
 		}else if(hotbarItems.size() == 5 && selectedItem > 4) {
 			selectedItem = 4;
 		}
+		
+		hotbarItems.addAll(toAdd);
+		toAdd.clear();
 		
 		boolean inventoryHasItem1 = false;
 		boolean inventoryHasItem2 = false;
@@ -120,6 +127,13 @@ public class Hotbar {
 		hotbarItems.removeAll(toRemove);
 		toRemove.clear();
 		
+		if(hotbarItems.size() >= 1 && !(selectedItem >= hotbarItems.size())
+				&& !handler.getWorld().getEntityManager().getPlayer().getInventory().isActive()
+				&& !handler.getWorld().getEntityManager().getPlayer().getBrewing().isActive()) {
+			if(handler.getMouseManager().isRightPressed()) {
+				use();
+			}
+		}
 	}
 	
 	public void render(Graphics g) {
@@ -160,6 +174,69 @@ public class Hotbar {
 		}
 	}
 
+	public void use() {
+		Player player = handler.getWorld().getEntityManager().getPlayer();
+		if(hotbarItems.get(selectedItem).getId() == Item.bottle.getId()) {
+			float pX = player.getX() + player.getWidth() / 2;
+			float pY = player.getY() + player.getHeight() / 2;
+			int tileX = (int) Math.floor(pX / 64);
+			int tileY = (int) Math.floor(pY / 64);
+			if(handler.getWorld().getTile(tileX, tileY).id == Tile.waterTile.id) {
+				player.getInventory().removeItem(Item.bottle, 1);
+				player.getInventory().addItem1(Item.waterBottle, 1);
+				toAdd.add(Item.waterBottle);
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			return;
+		}else if(hotbarItems.get(selectedItem).getId() == Item.healthPotion.getId()) {
+			player.getInventory().removeItem(Item.healthPotion, 1);
+			player.getInventory().addItem1(Item.bottle, 1);
+			toAdd.add(Item.bottle);
+			player.setHealth(player.getHealth() + 5);
+			if(player.getHealth() > player.getMaxHealth()) {
+				player.setHealth(player.getMaxHealth());
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			return;
+		}else if(hotbarItems.get(selectedItem).getId() == Item.healthBoostPotion.getId()) {
+			player.getInventory().removeItem(Item.healthBoostPotion, 1);
+			player.getInventory().addItem1(Item.bottle, 1);
+			toAdd.add(Item.bottle);
+			player.setMaxHealth(player.getMaxHealth() + 5);
+			player.setHealth(player.getMaxHealth());
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			return;
+		}else if(hotbarItems.get(selectedItem).getId() == Item.bossKey.getId()) {
+			float mX = handler.getMouseManager().getMouseX() + handler.getGameCamera().getxOffset();
+			float mY = handler.getMouseManager().getMouseY() + handler.getGameCamera().getyOffset();
+			int tileX = (int) Math.floor(mX / 64);
+			int tileY = (int) Math.floor(mY / 64);
+			if(handler.getWorld().getTile(tileX, tileY).id == Tile.bossEntrance.id) {
+				player.getInventory().removeItem(Item.bossKey, 1);
+				handler.getWorld().getTile(tileX, tileY).setUnlocked(true);
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			return;
+		}
+		
+	}
+	
 	public ArrayList<Item> getHotbarItems() {
 		return hotbarItems;
 	}

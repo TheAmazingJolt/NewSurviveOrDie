@@ -24,6 +24,8 @@ public class Zombie extends Hostile{
     private Animation animUp;
     private Animation animLeft;
     private Animation animRight;
+    
+    private Player player;
 
 	public Zombie(Handler handler, float x, float y, int id, Player player) {
 		super(handler, x, y, 64, 64, maxHealth, id, "Zombie");
@@ -34,7 +36,7 @@ public class Zombie extends Hostile{
 		bounds.y = 30;
 		bounds.width = 20;
 		bounds.height = 34;
-		attackCooldown = 200L;
+		attackCooldown = 300L;
         animDown = new Animation(500, Assets.zombieDown);
         animUp = new Animation(500, Assets.zombieUp);
         animLeft = new Animation(500, Assets.zombieLeft);
@@ -43,14 +45,16 @@ public class Zombie extends Hostile{
         this.isAttacking = false;
         this.following = player;
         this.handler = handler;
+        this.player = player;
         ar = new Rectangle();
-        this.speed = 4f;
+        this.speed = 3f;
+        this.defaultSpeed = 3f;
 	}
 
 	public void tick() {
 		if(!active) {
-			bounds.width = 0;
-			bounds.height = 0;
+            bounds.width = 0;
+            bounds.height = 0;
 			return;
 		}
 		animDown.tick();
@@ -62,6 +66,8 @@ public class Zombie extends Hostile{
 	}
 
 	public void render(Graphics g) {
+		if(!active)
+			return;
 		g.drawImage(getCurrentAnimationFrame(), (int)(x - handler.getGameCamera().getxOffset()), (int)(y - handler.getGameCamera().getyOffset()), width, height, null);
 		g.setColor(Color.red);
 		g.fillRect((int)(x - handler.getGameCamera().getxOffset()), (int)(y - handler.getGameCamera().getyOffset() - 5), width, 3);
@@ -75,7 +81,15 @@ public class Zombie extends Hostile{
 	}
 
 	public void die() {
-        handler.getWorld().getItemManager().addItem(Item.rottenFlesh.createNew((int)x, (int)y));
+		if(handler.getRandom().nextInt(5) == 0) {
+			handler.getWorld().getItemManager().addItem(Item.healingPowder.createNew((int) x, (int) y));
+		}
+        handler.getWorld().getItemManager().addItem(Item.rottenFlesh.createNew((int) x, (int) y));
+        player.setKilledEnemies(player.getKilledEnemies() + 1);
+        if(player.getKilledEnemies() == 5) {
+        	handler.getWorld().getItemManager().addItem(Item.bossKey.createNew((int) x, (int) y));
+        }
+        active = false;
 	}
 	
 	private void checkAttacks()
@@ -85,8 +99,9 @@ public class Zombie extends Hostile{
         ar.width = arSize;
         ar.height = arSize * 3;
         if(!this.isAttacking && this.following.isActive()) {
-        	this.follow(following, arSize, 150);
+        	this.follow(following, 150);
         }
+        updateHitbox(arSize);
     	if(timer == null)
     		timer = new Timer(attackCooldown, 1);
     	timer.tick();
@@ -96,7 +111,8 @@ public class Zombie extends Hostile{
     		timer = null;
     	}
         if(handler.getWorld().getEntityManager().getPlayer().getCollisionBounds(0.0F, 0.0F).intersects(ar)) {
-            handler.getWorld().getEntityManager().getPlayer().hurt(1);
+        	System.out.println(1 * handler.getGame().getDifficultyLevel());
+            handler.getWorld().getEntityManager().getPlayer().hurt(1 * handler.getGame().getDifficultyLevel());
             this.isAttacking = true;
         }else {
         	this.isAttacking = false;
